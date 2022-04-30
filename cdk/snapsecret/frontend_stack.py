@@ -125,13 +125,7 @@ class FrontendStack(Stack):
         )
 
         # Deploy the frontend assets to S3 and invalidate the CloudFront Cache
-        setup_command = "&&".join([
-            "export npm_config_update_notifier=false",
-            "export npm_config_cache=$(mktemp -d)",
-            "npm install",
-        ])
-        build_command = f'VITE_WEBAPI_ENDPOINT="{apigw_url}" npm run build && cp -au dist/* /asset-output'
-        complete_build_command = setup_command + "&&" + build_command
+        build_command = f'npm install && VITE_WEBAPI_ENDPOINT="{apigw_url}" npm run build && cp -au dist/* /asset-output'
         s3_deployment.BucketDeployment(
             self,
             id="snapsecret_frontend_deploy",
@@ -148,8 +142,8 @@ class FrontendStack(Stack):
                         image=lambda_.Runtime.NODEJS_14_X.bundling_image,
                         command=[
                             "bash",
-                            "-xc",
-                            complete_build_command,
+                            "-c",
+                            build_command,
                         ],
                     ),
                 )
